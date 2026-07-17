@@ -1,0 +1,184 @@
+===================================================================
+FILE: TOÀN BỘ PROMPT ĐÃ SỬ DỤNG - BÀI TẬP 03
+Môn học: AI in Application
+Sinh viên: Huỳnh Lã Tiến Lộc
+Chủ đề: Sinh mã nguồn API Spring Boot từ tài liệu SRS
+===================================================================
+
+--------------------------------------------------
+PROMPT 1: Thiết lập vai trò Senior Backend Developer
+--------------------------------------------------
+Từ bây giờ, bạn hãy đóng vai là một Senior Backend Developer với 10+ năm
+kinh nghiệm phát triển hệ thống FinTech với Java/Spring Boot.
+
+Bạn thành thạo:
+- Spring Boot 3.x (Spring Security, Spring Data JPA, Spring Validation)
+- Thiết kế RESTful API theo chuẩn REST Maturity Level 2
+- Mẫu thiết kế Clean Architecture, SOLID Principles, DRY/KISS
+- Viết code có JavaDoc và comment tiếng Việt trong phần logic phức tạp
+- JUnit 5 + Mockito cho Unit Testing
+- Docker và CI/CD pipelines
+
+Hãy xác nhận vai trò và sẵn sàng nhận yêu cầu sinh mã nguồn.
+
+--------------------------------------------------
+PROMPT 2: Cung cấp SRS và yêu cầu sinh project structure
+--------------------------------------------------
+Tuyệt vời! Dưới đây là yêu cầu từ SRS (Software Requirements Specification)
+của dự án eKYC - ABC Bank:
+
+[YÊU CẦU NGHIỆP VỤ]
+Tính năng: Đăng ký mở tài khoản ngân hàng cơ bản
+
+Input (Request):
+- fullName: String (bắt buộc, 2-100 ký tự)
+- phone: String (bắt buộc, đầu số VN: 03x/07x/08x/09x, 10 số)
+- email: String (bắt buộc, định dạng email hợp lệ)
+- citizenId: String (bắt buộc, đúng 12 chữ số số)
+
+Output (Response):
+- accountId: UUID
+- accountNumber: String (16 số, unique)
+- status: Enum (PENDING / ACTIVE)
+- createdAt: LocalDateTime
+
+[YÊU CẦU KỸ THUẬT]
+1. Java 17, Spring Boot 3.2.x
+2. Spring Data JPA + PostgreSQL
+3. Bean Validation (@Valid, @NotBlank, custom validator)
+4. Global Exception Handling (@ControllerAdvice)
+5. Response wrapper (ApiResponse<T> generic)
+
+Hãy sinh đầy đủ cấu trúc thư mục (project structure) trước khi viết code.
+Format: Hiển thị dạng cây thư mục.
+
+--------------------------------------------------
+PROMPT 3: Sinh Entity và DTO classes
+--------------------------------------------------
+Tốt! Bây giờ hãy sinh code cho các class sau, theo thứ tự:
+
+1. **CustomerEntity.java** - JPA Entity
+   - Bảng: customers
+   - Các trường: id (UUID), fullName, phone, email, citizenId, accountId, accountNumber, status, createdAt, updatedAt
+   - Annotations: @Entity, @Table, @Id, @GeneratedValue, @Column, @CreationTimestamp, @UpdateTimestamp
+   - Phải có JavaDoc giải thích mục đích class và từng trường quan trọng
+
+2. **AccountStatus.java** - Enum
+   - Các giá trị: PENDING, ACTIVE, REJECTED, SUSPENDED
+   - Có mô tả (description) cho từng giá trị
+
+3. **RegistrationRequest.java** - DTO (Request)
+   - Có Bean Validation annotations
+   - Custom validator cho citizenId (phải đúng 12 số)
+   - @NotBlank, @Email, @Pattern với regex cho phone VN
+
+4. **RegistrationResponse.java** - DTO (Response)
+   - Dùng Java 17 Record nếu có thể
+
+5. **ApiResponse.java** - Generic Response Wrapper
+   - Generic type T
+   - Các field: success (boolean), message, data (T), timestamp
+   - Static factory methods: success(data), error(message)
+
+Mỗi class phải có đầy đủ JavaDoc và comment tiếng Việt cho logic phức tạp.
+
+--------------------------------------------------
+PROMPT 4: Sinh Repository và Service
+--------------------------------------------------
+Tiếp tục sinh:
+
+6. **CustomerRepository.java** - Spring Data JPA Repository
+   - Extends JpaRepository<CustomerEntity, UUID>
+   - Custom queries: findByPhone, findByCitizenId, existsByPhoneOrCitizenId
+   - Dùng @Query nếu cần query phức tạp
+
+7. **RegistrationService.java** - Service Interface
+   - Method: register(RegistrationRequest request): RegistrationResponse
+   - Mô tả trong JavaDoc: pre-conditions, post-conditions, throws
+
+8. **RegistrationServiceImpl.java** - Service Implementation
+   - Implement đầy đủ logic:
+     a) Kiểm tra trùng phone/citizenId
+     b) Validate CCCD còn hiệu lực (giả lập)
+     c) Generate accountNumber duy nhất (16 số)
+     d) Tạo customer mới với status PENDING hoặc ACTIVE
+     e) Lưu vào database
+   - Comment tiếng Việt giải thích từng bước logic
+   - Ném BusinessException nếu vi phạm business rule
+
+--------------------------------------------------
+PROMPT 5: Sinh Controller và Exception Handling
+--------------------------------------------------
+Tiếp tục:
+
+9. **RegistrationController.java** - REST Controller
+   - @RestController, @RequestMapping("/api/v1/registration")
+   - Method: POST /register với @Valid, @RequestBody
+   - Trả về ResponseEntity<ApiResponse<RegistrationResponse>>
+   - Có @Operation annotation (Swagger/OpenAPI)
+   - JavaDoc mô tả endpoint
+
+10. **GlobalExceptionHandler.java** - @ControllerAdvice
+    - Xử lý các exception:
+      * MethodArgumentNotValidException → 400 Bad Request với danh sách lỗi validation
+      * BusinessException → 422 Unprocessable Entity
+      * DataIntegrityViolationException → 409 Conflict
+      * Exception (fallback) → 500 Internal Server Error
+    - Response format nhất quán với ApiResponse
+
+11. **BusinessException.java** - Custom Exception
+    - Kế thừa RuntimeException
+    - Có errorCode (String) và message
+    - Enum ErrorCode cho các loại lỗi: PHONE_ALREADY_EXISTS, CITIZEN_ID_ALREADY_EXISTS, INVALID_CITIZEN_ID
+
+--------------------------------------------------
+PROMPT 6: Sinh Custom Validator
+--------------------------------------------------
+Tạo thêm:
+
+12. **CitizenIdValidator.java** - Custom Bean Validation Constraint
+    - Annotation: @ValidCitizenId
+    - Validate: đúng 12 số; không phải "000000000000"
+    - Có message tiếng Việt: "Số CCCD phải gồm đúng 12 chữ số"
+
+13. **VietnamesePhoneValidator.java** - Custom Validator cho SĐT VN
+    - Validate đầu số hợp lệ: 03x, 07x, 08x, 09x
+    - Annotation: @ValidVietnamesePhone
+
+--------------------------------------------------
+PROMPT 7: Sinh Architecture Diagram
+--------------------------------------------------
+Cuối cùng, hãy sinh:
+
+14. **Architecture Diagram** (Mermaid format)
+    Vẽ sơ đồ kiến trúc mô tả luồng xử lý từng request:
+    Client → API Gateway → Controller → Service → Repository → Database
+    Và các class tham gia trong mỗi tầng.
+
+15. **application.yml** - Cấu hình Spring Boot
+    - Database connection (PostgreSQL)
+    - JPA/Hibernate settings
+    - Server port, context path
+    - Logging levels
+
+--------------------------------------------------
+PROMPT 8 (Bonus): Yêu cầu sửa và cải thiện code
+--------------------------------------------------
+[Đây là prompt dùng để "ép AI sửa code/thêm tính năng" - mô phỏng quá trình iterative development]
+
+Tôi muốn cải thiện code RegistrationServiceImpl:
+
+1. Thêm tính năng: Nếu số điện thoại đã tồn tại trong hệ thống với cùng citizenId,
+   thì trả về thông tin tài khoản cũ thay vì tạo mới (idempotency)
+
+2. Thêm logging với SLF4J/Logback:
+   - Log INFO khi nhận request
+   - Log WARN khi phát hiện dữ liệu trùng lặp
+   - Log ERROR khi có exception
+
+3. Thêm @Transactional annotation đúng chỗ với readOnly = true cho các query methods
+
+4. Thêm tính năng generate accountNumber theo format chuẩn ngân hàng:
+   "ABC" + năm hiện tại (2 số) + 11 số random
+
+Hãy refactor code và giải thích những thay đổi bạn đã thực hiện.

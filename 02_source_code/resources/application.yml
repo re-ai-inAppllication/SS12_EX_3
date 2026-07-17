@@ -1,0 +1,33 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: ekyc-registration-service
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ekyc_db
+    username: ekyc_user
+    password: password_secure
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate # Trong thực tế dùng Flyway/Liquibase, không dùng update/create
+    show-sql: false # Tắt log SQL ở production
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+logging:
+  level:
+    root: INFO
+    com.abcbank.ekyc: DEBUG # Bật debug cho code của dự án
+    org.springframework.web: INFO
+    org.hibernate.SQL: ERROR # Tắt log SQL để bảo mật dữ liệu PII
